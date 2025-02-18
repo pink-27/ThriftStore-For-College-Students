@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { useUser } from "@clerk/nextjs"; // Import Clerk's useUser hook
 
 const AddProduct = () => {
   const [name, setName] = useState("");
@@ -8,25 +9,36 @@ const AddProduct = () => {
   const [category, setCategory] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
   const router = useRouter();
+  const { user } = useUser(); // Get the logged-in user
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(JSON.stringify({ name, description, price, category }));
+
+    if (!user) {
+      setError("You must be logged in to add a product.");
+      return;
+    }
+
+    const sellerId = user.id; // Get Clerk user ID
+    console.log(
+      JSON.stringify({ name, description, price, category, sellerId })
+    );
+
     const response = await fetch("/api/products", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, description, price, category }),
+      body: JSON.stringify({ name, description, price, category, sellerId }),
     });
 
-    console.log(response);
     const data = await response.json();
 
     if (response.ok) {
       setMessage(data.message);
-      router.push("/"); // Redirect to home after successful submission
+      router.push("/"); // Redirect after successful submission
     } else {
       setError(data.message);
     }

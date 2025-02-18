@@ -1,60 +1,32 @@
-// pages/index.tsx
-import { useEffect, useState } from "react";
-// import ProductList from "./components/ProductList";
-import Link from "next/link";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
 
-const Home = () => {
-  const [products, setProducts] = useState<any[]>([]);
-
-  const handleDelete = async (productId: string) => {
-    const res = await fetch(`/api/products/${productId}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setProducts(products.filter((product) => product._id !== productId));
-    }
-  };
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      setProducts(data);
-    };
-
-    fetchProducts();
-  }, []);
+export default function Home() {
+  const { user } = useUser(); // Get user info if signed in
 
   return (
-    <div>
+    <div style={{ padding: "20px", textAlign: "center" }}>
       <h1>Welcome to Thrift Store</h1>
 
-      <div>
-        {products.map((product) => (
-          <div
-            key={product._id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-            }}
-          >
-            <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <p>
-              <strong>Price:</strong> ${product.price}
-            </p>
-            <p>
-              <strong>Category:</strong> {product.category}
-            </p>
-            <Link href={`/product/${product._id}`} passHref>
-              <button>View Details</button>
-            </Link>
-            <button onClick={() => handleDelete(product._id)}>Delete</button>
-          </div>
-        ))}
-      </div>
+      {/* If the user is signed in, show their details */}
+      <SignedIn>
+        <div>
+          <h2>Hello, {user?.firstName}!</h2>
+          <p>Email: {user?.primaryEmailAddress?.emailAddress}</p>
+          <UserButton afterSignOutUrl="/" />
+        </div>
+      </SignedIn>
+
+      {/* If the user is signed out, show sign-in button */}
+      <SignedOut>
+        <p>Please sign in or create an account to continue.</p>
+        <SignInButton />
+      </SignedOut>
     </div>
   );
-};
-
-export default Home;
+}

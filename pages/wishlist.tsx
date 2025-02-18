@@ -1,13 +1,22 @@
 // pages/wishlist.tsx
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs"; // Import Clerk's useUser hook
+import { useRouter } from "next/router";
+import { useAuth } from "@clerk/nextjs";
 
 const Wishlist = () => {
+  const { getToken } = useAuth();
   const [wishlist, setWishlist] = useState<any[]>([]);
+  const router = useRouter();
+  const { user } = useUser(); // Get the logged-in user
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
     const fetchWishlist = async () => {
-      const res = await fetch("/api/wishlist");
+      const res = await fetch(`/api/wishlist?userId=${user.id}`);
       //   console.log(res);
       const data = await res.json();
 
@@ -15,20 +24,23 @@ const Wishlist = () => {
     };
 
     fetchWishlist();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (productId: string) => {
     // setProduct(prod);
+    const token = await getToken();
     const res = await fetch(`/api/wishlist`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         productId,
       }),
     });
     const data = await res.json();
+    console.log(data);
     if (res.ok) {
       setWishlist(data);
     }
@@ -36,10 +48,13 @@ const Wishlist = () => {
 
   const handlePlaceOrder = async (productId: string) => {
     // setProduct(prod);
+    const token = await getToken();
+
     const res = await fetch(`/api/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         productId,

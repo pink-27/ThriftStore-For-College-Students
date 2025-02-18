@@ -19,15 +19,25 @@ export default async function handler(
 
   if (req.method === "POST") {
     try {
-      const { name, description, price, category } = req.body;
-      if (!name || !description || !price || !category) {
+      const { name, description, price, sellerId, category } = req.body;
+
+      if (!name || !description || !price || !category || !sellerId) {
         return res.status(400).json({ error: "Missing required fields" });
       }
-      const newProduct = new Product({ name, description, price, category });
-      console.log(price);
+
+      const newProduct = new Product({
+        name,
+        description,
+        price,
+        seller: sellerId, // Ensure consistency
+        category,
+      });
+
       await newProduct.save();
+
       return res.status(201).json({ message: "Product created successfully" });
     } catch (error) {
+      console.error("Error saving product:", error);
       return res.status(500).json({ error: "Failed to create product" });
     }
   }

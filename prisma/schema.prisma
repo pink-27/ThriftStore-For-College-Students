@@ -16,7 +16,8 @@ datasource db {
 model Order {
   id          String   @id @default(uuid())
   productId   String
-  quantity    Int
+  userId      String   @default("temp-user")  // Buyer ID (from Clerk)
+  sellerId    String   @default("temp-seller")// Seller ID (from Product model)
   status      String   @default("pending")
   createdAt   DateTime @default(now())
 }
