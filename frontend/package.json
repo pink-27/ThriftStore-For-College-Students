@@ -1,0 +1,40 @@
+{
+  "name": "thriftstore",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.11.3",
+    "@prisma/client": "^6.3.1",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "kafkajs": "^2.2.4",
+    "mongodb": "^6.13.0",
+    "mongoose": "^8.9.6",
+    "next": "15.1.6",
+    "next-auth": "^4.24.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "websocket": "^1.0.35",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.6",
+    "postcss": "^8",
+    "prisma": "^6.3.1",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "type": "module"
+}
