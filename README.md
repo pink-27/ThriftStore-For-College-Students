@@ -83,7 +83,7 @@ cd microservices
 ### 2. **Start Services with Docker Compose**
 
 ```sh
-docker-compose up --build
+docker-compose up --build -d
 ```
 
 This will start all services along with Kafka, PostgreSQL, and other dependencies.
