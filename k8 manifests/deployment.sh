@@ -100,13 +100,15 @@ spec:
         env:
         - name: ZOOKEEPER_CLIENT_PORT
           value: "2181"
-        - name: ZOOKEEPER_TICK_TIME  # Critical for operation
+        - name: ZOOKEEPER_TICK_TIME
           value: "2000"
         resources:
           requests:
-            memory: "512Mi"  # Increased from 256Mi
+            memory: "512Mi"
             cpu: "300m"
 
+---
+# Kafka Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -118,9 +120,9 @@ spec:
   - port: 9092
     targetPort: 9092
   selector:
-    app: kafka  # Matches the pod labels
----
+    app: kafka
 
+---
 # Kafka Deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -138,7 +140,7 @@ spec:
     spec:
       initContainers:
       - name: wait-for-zookeeper
-        image: alpine:3.18  # Better networking tools
+        image: alpine:3.18
         command: ['sh', '-c', 'until nc -zv zookeeper 2181 -w 2; do echo "Waiting for Zookeeper"; sleep 2; done']
       containers:
       - name: kafka
@@ -152,7 +154,7 @@ spec:
           value: "PLAINTEXT://:9092"
         - name: KAFKA_ADVERTISED_LISTENERS
           value: "PLAINTEXT://kafka:9092"
-        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE  # Needed for first-time setup
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
           value: "true"
         resources:
           requests:
