@@ -11,37 +11,35 @@ let cached = global.mongooseCache || { conn: null, promise: null };
 global.mongooseCache = cached;
 
 async function dbConnect() {
-  const tries = 10;
-  while (tries) {
+  const maxTries = 10;
+  let tries = maxTries;
+
+  while (tries > 0) {
     try {
       if (cached.conn) return cached.conn;
+
       if (!cached.promise) {
         cached.promise = mongoose
           .connect(
             "mongodb+srv://vihanvashishth2712:QMDigESqvC2SiuPX@cluster0.kcbr3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-            {}
+            { serverSelectionTimeoutMS: 5000 } // Fail fast
           )
           .then((mongoose) => mongoose);
       }
-      break;
-    } catch {
-      tries -= 1;
-      await new Promise((res) => {
-        setTimeout(500);
-      });
+
+      cached.conn = await cached.promise;
+      return cached.conn;
+    } catch (error) {
+      console.error(
+        `❌ MongoDB connection failed (${maxTries - tries + 1}/${maxTries}):`,
+        error.message
+      );
+      tries--;
+      await new Promise((res) => setTimeout(res, 5000)); // Wait 5s between retries
     }
   }
-  // if (cached.conn) return cached.conn;
-  // if (!cached.promise) {
-  //   cached.promise = mongoose
-  //     .connect(
-  //       "mongodb+srv://vihanvashishth2712:QMDigESqvC2SiuPX@cluster0.kcbr3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-  //       {}
-  //     )
-  //     .then((mongoose) => mongoose);
-  // }
-  cached.conn = await cached.promise;
-  return cached.conn;
+
+  throw new Error("🔥 All MongoDB connection attempts failed");
 }
 
 // Chat Schema
