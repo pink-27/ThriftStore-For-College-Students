@@ -38,7 +38,7 @@ const Orders = () => {
   const handleCancelOrder = async (orderId: string) => {
     const token = await getToken();
     console.log(orderId);
-    const res = await fetch(`/api/orders/${orderId}/cancel`, {
+    const res = await fetch(`http://localhost:5014/api/orders/${orderId}`, {
       method: "PATCH", // Use PATCH instead of DELETE to update order status
       headers: {
         "Content-Type": "application/json",

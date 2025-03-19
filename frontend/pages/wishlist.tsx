@@ -38,7 +38,7 @@ const Wishlist = () => {
   const handleDelete = async (productId: string) => {
     // setProduct(prod);
     const token = await getToken();
-    const res = await fetch(`/api/wishlist`, {
+    const res = await fetch(`http://localhost:5011/api/wishlist`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -48,6 +48,7 @@ const Wishlist = () => {
         productId,
       }),
     });
+    console.log(res, token, productId);
     const data = await res.json();
     console.log(data);
     if (res.ok) {
@@ -59,7 +60,7 @@ const Wishlist = () => {
     // setProduct(prod);
     const token = await getToken();
 
-    const res = await fetch(`/api/orders`, {
+    const res = await fetch(`http://localhost:5014/api/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

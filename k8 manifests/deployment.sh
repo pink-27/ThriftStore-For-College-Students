@@ -62,28 +62,33 @@ EOF
 
 # Create kafka-zookeeper.yaml
 cat > kafka-zookeeper.yaml << 'EOF'
-
-# Zookeeper Service
+# kafka-zookeeper.yaml
 apiVersion: v1
 kind: Service
 metadata:
+  labels:
+    app: zookeeper
   name: zookeeper
   namespace: microservices
 spec:
+  type: NodePort
   ports:
-  - port: 2181
-    targetPort: 2181
+    - name: zookeeper-port
+      port: 2181
+      nodePort: 30181
+      targetPort: 2181
   selector:
     app: zookeeper
-
 ---
-# Zookeeper Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app: zookeeper
   name: zookeeper
   namespace: microservices
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: zookeeper
@@ -93,43 +98,35 @@ spec:
         app: zookeeper
     spec:
       containers:
-      - name: zookeeper
-        image: confluentinc/cp-zookeeper:7.4.0
-        ports:
-        - containerPort: 2181
-        env:
-        - name: ZOOKEEPER_CLIENT_PORT
-          value: "2181"
-        - name: ZOOKEEPER_TICK_TIME
-          value: "2000"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "300m"
+        - image: wurstmeister/zookeeper
+          imagePullPolicy: IfNotPresent
+          name: zookeeper
+          ports:
+            - containerPort: 2181
 
 ---
-# Kafka Service
 apiVersion: v1
 kind: Service
 metadata:
+  labels:
+    app: kafka
   name: kafka
   namespace: microservices
 spec:
-  type: ClusterIP
   ports:
-  - port: 9092
-    targetPort: 9092
+    - port: 9092
   selector:
     app: kafka
-
 ---
-# Kafka Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app: kafka
   name: kafka
   namespace: microservices
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: kafka
@@ -138,31 +135,23 @@ spec:
       labels:
         app: kafka
     spec:
-      initContainers:
-      - name: wait-for-zookeeper
-        image: alpine:3.18
-        command: ['sh', '-c', 'until nc -zv zookeeper 2181 -w 2; do echo "Waiting for Zookeeper"; sleep 2; done']
       containers:
-      - name: kafka
-        image: confluentinc/cp-kafka:7.4.0
-        env:
-        - name: KAFKA_BROKER_ID
-          value: "1"
-        - name: KAFKA_ZOOKEEPER_CONNECT
-          value: "zookeeper:2181"
-        - name: KAFKA_LISTENERS
-          value: "PLAINTEXT://:9092"
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://kafka:9092"
-        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
-          value: "true"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
+        - env:
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: zookeeper:2181
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://:9092
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka:9092
+            - name: KAFKA_PORT
+              value: "9092"
+          image: wurstmeister/kafka
+          imagePullPolicy: IfNotPresent
+          name: kafka
+          ports:
+            - containerPort: 9092
 EOF
 
 # Create postgres.yaml
@@ -511,3 +500,5 @@ echo "To clean up when done:"
 echo "kubectl delete namespace microservices"
 echo "kubectl delete namespace monitoring"
 echo "minikube stop"
+
+
