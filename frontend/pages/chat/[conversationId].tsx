@@ -49,13 +49,19 @@ const ChatPage = () => {
     };
 
     fetchPreviousMessages();
+    console.log("Attempting to connect to WebSocket at ws://localhost:8081");
 
     // WebSocket Setup
     const socket = new WebSocket("ws://localhost:8081");
     setWs(socket);
+    console.log(socket);
 
     socket.onopen = () => {
-      socket.send(JSON.stringify({ conversationId }));
+      console.log("WebSocket connection OPEN");
+      // Send the conversationId immediately after connection
+      const subscriptionMessage = JSON.stringify({ conversationId });
+      console.log("Sending subscription:", subscriptionMessage);
+      socket.send(subscriptionMessage);
     };
 
     socket.onmessage = (event) => {
@@ -63,12 +69,27 @@ const ChatPage = () => {
       console.log(data);
       setMessages((prev) => [...prev, data]); // Append new messages
     };
+    socket.onclose = (event) => {
+      console.log("WebSocket connection CLOSED:", event.code, event.reason);
+    };
 
+    socket.onmessage = (event) => {
+      console.log("WebSocket message received:", event.data);
+      try {
+        const data = JSON.parse(event.data);
+        setMessages((prev) => [...prev, data]);
+      } catch (error) {
+        console.error("Error parsing websocket message:", error);
+      }
+    };
     socket.onerror = (error) => {
       console.error("WebSocket error:", error);
     };
 
-    return () => socket.close();
+    return () => {
+      console.log("Closing WebSocket connection");
+      socket.close();
+    };
   }, [conversationId, user]);
 
   const sendMessage = async () => {
