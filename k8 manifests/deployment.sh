@@ -115,6 +115,7 @@ metadata:
 spec:
   ports:
     - port: 9092
+      targetPort: 9092
   selector:
     app: kafka
 ---
@@ -164,6 +165,7 @@ metadata:
 spec:
   ports:
   - port: 5432
+    targetPort: 5432
   selector:
     app: postgres
 ---
@@ -210,7 +212,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 5014
+    - port: 5014
+      targetPort: 5014
   selector:
     app: order-service
 ---
@@ -230,15 +233,15 @@ spec:
         app: order-service
     spec:
       containers:
-      - name: order-service
-        image: pink27/order-service:latest
-        ports:
-        - containerPort: 5014
-        env:
-        - name: DATABASE_URL_PSQL
-          value: "postgresql://admin:admin@postgres:5432/orders"
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
+        - name: order-service
+          image: pink27/order-service:latest
+          ports:
+            - containerPort: 5014
+          env:
+            - name: DATABASE_URL_PSQL
+              value: "postgresql://admin:admin@postgres:5432/orders"
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
 ---
 apiVersion: v1
 kind: Service
@@ -247,7 +250,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 5010
+    - port: 5010
+      targetPort: 5010
   selector:
     app: product-service
 ---
@@ -267,13 +271,40 @@ spec:
         app: product-service
     spec:
       containers:
-      - name: product-service
-        image: pink27/product-service:latest
-        ports:
-        - containerPort: 5010
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
+        - name: product-service
+          image: pink27/product-service:latest
+          ports:
+            - containerPort: 5010
+          resources: # 🚀 REQUIRED for HPA
+            requests:
+              cpu: "100m" # 100 millicores (0.1 CPU)
+              memory: "256Mi"
+            limits:
+              cpu: "500m" # Max CPU allowed (0.5 CPU)
+              memory: "512Mi"
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: product-service-hpa
+  namespace: microservices
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: product-service
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # Scale when CPU exceeds 50% of request (100m)
 ---
 apiVersion: v1
 kind: Service
@@ -282,7 +313,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 5011
+    - port: 5011
+      targetPort: 5011
   selector:
     app: wishlist-service
 ---
@@ -302,15 +334,15 @@ spec:
         app: wishlist-service
     spec:
       containers:
-      - name: wishlist-service
-        image: pink27/wishlist-service:latest
-        ports:
-        - containerPort: 5011
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
-        - name: PRODUCT_SERVICE_URL
-          value: "http://product-service:5010"
+        - name: wishlist-service
+          image: pink27/wishlist-service:latest
+          ports:
+            - containerPort: 5011
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product-service:5010"
 ---
 apiVersion: v1
 kind: Service
@@ -319,7 +351,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 8081
+    - port: 8081
+      targetPort: 8081
   selector:
     app: ws-chat-service
 ---
@@ -339,13 +372,13 @@ spec:
         app: ws-chat-service
     spec:
       containers:
-      - name: ws-chat-service
-        image: pink27/ws-chat-service:latest
-        ports:
-        - containerPort: 8081
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
+        - name: ws-chat-service
+          image: pink27/ws-chat-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
 ---
 apiVersion: v1
 kind: Service
@@ -354,7 +387,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 8080
+    - port: 8080
+      targetPort: 8080  
   selector:
     app: notification-service
 ---
@@ -374,13 +408,13 @@ spec:
         app: notification-service
     spec:
       containers:
-      - name: notification-service
-        image: pink27/notification-service:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
+        - name: notification-service
+          image: pink27/notification-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
 ---
 apiVersion: v1
 kind: Service
@@ -389,7 +423,8 @@ metadata:
   namespace: microservices
 spec:
   ports:
-  - port: 5012
+    - port: 5012
+      targetPort: 5012  
   selector:
     app: chat-service
 ---
@@ -409,13 +444,14 @@ spec:
         app: chat-service
     spec:
       containers:
-      - name: chat-service
-        image: pink27/chat-service:latest
-        ports:
-        - containerPort: 5012
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
+        - name: chat-service
+          image: pink27/chat-service:latest
+          ports:
+            - containerPort: 5012
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
+
 EOF
 
 # Create prometheus-servicemonitor.yaml for monitoring
@@ -501,4 +537,6 @@ echo "kubectl delete namespace microservices"
 echo "kubectl delete namespace monitoring"
 echo "minikube stop"
 
+# hpa and load balancer
 
+# hey -z 5m -c 5 http://localhost:5010/api/products
