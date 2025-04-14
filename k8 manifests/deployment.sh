@@ -513,30 +513,30 @@ kubectl rollout restart deployment ws-chat-service -n microservices
 kubectl rollout restart deployment ws-chat-service -n microservices
 kubectl rollout restart deployment ws-chat-service -n microservices
 # Install Prometheus and Grafana 
-echo "Setting up monitoring with Prometheus and Grafana..."
-kubectl create namespace monitoring || true
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --set grafana.enabled=true \
-  --set prometheus.service.type=NodePort || true
+# echo "Setting up monitoring with Prometheus and Grafana..."
+# kubectl create namespace monitoring || true
+# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# helm repo update
+# helm install prometheus prometheus-community/kube-prometheus-stack \
+#   --namespace monitoring \
+#   --set grafana.enabled=true \
+#   --set prometheus.service.type=NodePort || true
 
-# kubectl apply -f prometheus-servicemonitor.yaml
+# # kubectl apply -f prometheus-servicemonitor.yaml
 
-echo "===== Setup Complete ====="
-echo "To access your services from your local frontend, run:"
-echo "./port-forward.sh"
-echo ""
-echo "To access Grafana dashboard:"
-echo "kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
-echo "Then visit http://localhost:3000 (default credentials: admin/prom-operator)"
-echo ""
-echo "To clean up when done:"
-echo "kubectl delete namespace microservices"
-echo "kubectl delete namespace monitoring"
-echo "minikube stop"
+# echo "===== Setup Complete ====="
+# echo "To access your services from your local frontend, run:"
+# echo "./port-forward.sh"
+# echo ""
+# echo "To access Grafana dashboard:"
+# echo "kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
+# echo "Then visit http://localhost:3000 (default credentials: admin/prom-operator)"
+# echo ""
+# echo "To clean up when done:"
+# echo "kubectl delete namespace microservices"
+# echo "kubectl delete namespace monitoring"
+# echo "minikube stop"
 
-# hpa and load balancer
+# # hpa and load balancer
 
-# hey -z 5m -c 5 http://localhost:5010/api/products
+# # hey -z 5m -c 5 http://localhost:5010/api/products
